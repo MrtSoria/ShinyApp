@@ -9,26 +9,68 @@
 
 library(shiny)
 library(DT)
+library(leaflet)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
 
 # Define server logic required to draw a histogram
 function(input, output, session) {
 
+    #Carga del dataset de expectativa de vida
+    data1 <- read.csv("https://ourworldindata.org/grapher/life-expectancy.csv?v=1&csvType=full&useColumnShortNames=true")
+  
+    #Generar la DataTable para mostrar el dataset
     output$data1_ <- renderDT(
-      read.csv("https://ourworldindata.org/grapher/life-expectancy.csv?v=1&csvType=full&useColumnShortNames=true"),
+      data1,
       options = list(lengthchange = TRUE)
     )
-   
-    output$distPlot <- renderPlot({
-
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-
+    
+    #Cargar datos geoespaciales con los codigos ISO
+    world <- ne_countries(scale = "medium", returnclass = "sf")
+    
+    #Cambio de nombre de columnas para mayor comodidad
+    colnames(data1) <- c("pais","iso_a3","year","lifeExp")
+    
+    #Filtrar datos por año
+    data1_fil <- reactive({
+      data1 %>%
+        filter(year == input$year)
     })
-
+  
+    #Unir datos filtrados con el mapa usando los codigos ISO
+    mapa_datos <- reactive({
+      world %>%
+        left_join(data1_fil(), by = c("iso_a3" = "iso_a3"))
+    })
+    
+    #Renderizar mapa
+    output$mapa <- renderLeaflet({
+      leaflet(data = mapa_datos(), options = leafletOptions(zoomSnap = 0.5, zoomDelta = 0.5, maxZoom = 4, minZoom = 2.25)) %>%
+        addTiles() %>%
+        #Setear vista de inicio
+        setView(lng = 0, lat = 30, zoom = 2) %>%
+        addPolygons(
+          #Color de los paises
+          fillColor = ~colorBin("YlGnBu", lifeExp, bins = 6)(lifeExp),
+          #Opacidad del color
+          fillOpacity = 0.8,
+          #Color de frontera
+          color = "white",
+          #Grosor de frontera
+          weight = 0.5,
+          #Popup con valor por pais
+          popup = ~paste(name, "<br>Expectativa de vida:", round(lifeExp, 1), "años"),
+          label = ~name
+        ) %>%
+        #Leyenda del mapa
+        addLegend("bottomright",
+                  pal = colorBin("YlGnBu", mapa_datos()$lifeExp, bins = 6),
+                  values = mapa_datos()$lifeExp,
+                  title = "Expectativa de vida",
+                  opacity = 1
+                  ) %>%
+        #Fijar limites de desplazamiento
+        setMaxBounds(lng1 = -180, lat1 = -60, lng2 = 180, lat2 = 85)
+    })
 }

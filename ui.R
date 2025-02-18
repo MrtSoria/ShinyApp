@@ -9,6 +9,7 @@
 
 library(shiny)
 
+
 # Define UI for application that draws a histogram
 fluidPage(
 
@@ -18,19 +19,25 @@ fluidPage(
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+          #Slider de tiempo
+            sliderInput("year", "Seleccione el año:",
+                        min = min(data1$year),
+                        max = max(data1$year),
+                        value = max(data1$year),
+                        step = 1,
+                        sep = "")
         ),
 
         # Show a plot of the generated distribution
         mainPanel(
+          #Pestañas
           tabsetPanel(
-            tabPanel("Grafico", plotOutput("distPlot")),
+            #Pestaña del mapa
+            tabPanel("Grafico", leafletOutput("mapa", height = "800px")),
+            #Pestaña del dataset lifeExp
             tabPanel("Data", dataTableOutput("data1_"))
           )
         )
     )
 )
+
