@@ -1,12 +1,5 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    https://shiny.posit.co/
-#
-
+# server.R
+library(dplyr)
 library(shiny)
 library(DT)
 library(leaflet)
@@ -17,33 +10,27 @@ library(rnaturalearthdata)
 # Define server logic required to draw a histogram
 function(input, output, session) {
 
-    #Carga del dataset de expectativa de vida
-    data1 <- read.csv("https://ourworldindata.org/grapher/life-expectancy.csv?v=1&csvType=full&useColumnShortNames=true")
-  
     #Generar la DataTable para mostrar el dataset
     output$data1_ <- renderDT(
       data1,
       options = list(lengthchange = TRUE)
     )
-    
+
     #Cargar datos geoespaciales con los codigos ISO
     world <- ne_countries(scale = "medium", returnclass = "sf")
-    
-    #Cambio de nombre de columnas para mayor comodidad
-    colnames(data1) <- c("pais","iso_a3","year","lifeExp")
-    
+
     #Filtrar datos por año
     data1_fil <- reactive({
       data1 %>%
         filter(year == input$year)
     })
-  
+
     #Unir datos filtrados con el mapa usando los codigos ISO
     mapa_datos <- reactive({
       world %>%
         left_join(data1_fil(), by = c("iso_a3" = "iso_a3"))
     })
-    
+
     #Renderizar mapa
     output$mapa <- renderLeaflet({
       leaflet(data = mapa_datos(), options = leafletOptions(zoomSnap = 0.5, zoomDelta = 0.5, maxZoom = 4, minZoom = 2.25)) %>%
