@@ -4,9 +4,6 @@ library(dplyr)
 #Carga del dataset de expectativa de vida
 datos <- read.csv("food-supply-vs-life-expectancy.csv")
 
-#Cambia los nombres de las columnas
-colnames(datos) <- c("Country","Code","Year","Life_Exp","Cal_diarias_p/persona","Poblacion_historica","W")
-
 #Borra la ultima columna, que no nos sirve
 datos <- select(datos, -W)
 
@@ -18,5 +15,7 @@ datos <- datos %>% filter(
   Year >= 1961, nchar(Code) == 3
 ) 
 
-min_year <- min(datos$Year)
+min_year <- 1961
 max_year <- max(datos$Year)
+
+countries <- datos

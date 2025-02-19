@@ -1,4 +1,4 @@
-Entity,Code,Year,Life expectancy - Sex: all - Age: 0 - Variant: estimates,Daily calorie supply per person,Population (historical),World regions according to OWID
+Country,Code,Year,Life_Exp,Cal_diarias_p,Poblacion_historica,W
 Afghanistan,AFG,1950,28.156,,7776182,
 Afghanistan,AFG,1951,28.584,,7879343,
 Afghanistan,AFG,1952,29.014,,7987783,
