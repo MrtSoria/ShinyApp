@@ -2,10 +2,21 @@
 library(dplyr)
 
 #Carga del dataset de expectativa de vida
-data1 <- read.csv("https://ourworldindata.org/grapher/life-expectancy.csv?v=1&csvType=full&useColumnShortNames=true")
+datos <- read.csv("food-supply-vs-life-expectancy.csv")
 
-#Cambio de nombre de columnas para mayor comodidad
-colnames(data1) <- c("pais","iso_a3","year","lifeExp")
+#Cambia los nombres de las columnas
+colnames(datos) <- c("Country","Code","Year","Life_Exp","Cal_diarias_p/persona","Poblacion_historica","W")
 
-min_year <- min(data1$year)
-max_year <- max(data1$year)
+#Borra la ultima columna, que no nos sirve
+datos <- select(datos, -W)
+
+#Borra todas las tuplas con datos NA 
+datos <-na.omit(datos)
+
+#Borra las tuplas cuyo año sea menor a 1961 y el codigo no cumpla con el estandar ISO A3
+datos <- datos %>% filter(
+  Year >= 1961, nchar(Code) == 3
+) 
+
+min_year <- min(datos$Year)
+max_year <- max(datos$Year)

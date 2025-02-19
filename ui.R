@@ -6,7 +6,7 @@ library(leaflet)
 fluidPage(
 
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
+    titlePanel("Life expectancy"),
 
     # Sidebar with a slider input for number of bins
     sidebarLayout(
@@ -27,7 +27,7 @@ fluidPage(
             #Pestaña del mapa
             tabPanel("Grafico", leafletOutput("mapa", height = "800px")),
             #Pestaña del dataset lifeExp
-            tabPanel("Data", dataTableOutput("data1_"))
+            tabPanel("Data", dataTableOutput("datos_"))
           )
         )
     )

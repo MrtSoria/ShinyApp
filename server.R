@@ -11,8 +11,8 @@ library(rnaturalearthdata)
 function(input, output, session) {
 
     #Generar la DataTable para mostrar el dataset
-    output$data1_ <- renderDT(
-      data1,
+    output$datos_ <- renderDT(
+      datos,
       options = list(lengthchange = TRUE)
     )
 
@@ -20,15 +20,15 @@ function(input, output, session) {
     world <- ne_countries(scale = "medium", returnclass = "sf")
 
     #Filtrar datos por año
-    data1_fil <- reactive({
-      data1 %>%
-        filter(year == input$year)
+    datos_fil <- reactive({
+      datos %>%
+        filter(Year == input$year)
     })
 
     #Unir datos filtrados con el mapa usando los codigos ISO
     mapa_datos <- reactive({
       world %>%
-        left_join(data1_fil(), by = c("iso_a3" = "iso_a3"))
+        left_join(datos_fil(), by = c("iso_a3" = "Code"))
     })
 
     #Renderizar mapa
@@ -39,7 +39,7 @@ function(input, output, session) {
         setView(lng = 0, lat = 30, zoom = 2) %>%
         addPolygons(
           #Color de los paises
-          fillColor = ~colorBin("YlGnBu", lifeExp, bins = 6)(lifeExp),
+          fillColor = ~colorBin("YlGnBu", Life_Exp, bins = 6)(Life_Exp),
           #Opacidad del color
           fillOpacity = 0.8,
           #Color de frontera
@@ -47,13 +47,13 @@ function(input, output, session) {
           #Grosor de frontera
           weight = 0.5,
           #Popup con valor por pais
-          popup = ~paste(name, "<br>Expectativa de vida:", round(lifeExp, 1), "años"),
+          popup = ~paste(name, "<br>Expectativa de vida:", round(Life_Exp, 1), "años"),
           label = ~name
         ) %>%
         #Leyenda del mapa
         addLegend("bottomright",
-                  pal = colorBin("YlGnBu", mapa_datos()$lifeExp, bins = 6),
-                  values = mapa_datos()$lifeExp,
+                  pal = colorBin("YlGnBu", mapa_datos()$Life_Exp, bins = 6),
+                  values = mapa_datos()$Life_Exp,
                   title = "Expectativa de vida",
                   opacity = 1
                   ) %>%
