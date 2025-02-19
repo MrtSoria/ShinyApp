@@ -1,50 +1,46 @@
-#UI
-# 
-# fluidPage(
-#   titlePanel("Clustering de países por indicadores de salud"),
-#   sidebarLayout(
-#     sidebarPanel(
-#       sliderInput("year", "Selecciona un año:",
-#                   min = 1961, max = 2021,
-#                   value = 2021, step = 1,
-#                   animate = TRUE)
-#     ),
-#     mainPanel(
-#       leafletOutput("clusterMap", height = "800px")
 
 # UI
 fluidPage(
-
-    # Título
-    titlePanel("Life expectancy"),
-
-    tabsetPanel(
-      # Pestaña del mapa
-      tabPanel("Grafico",
-               sidebarPanel(
-                 # Slider de tiempo
-                 sliderInput("year", "Seleccione el año:",
-                             min = min_year,
-                             max = max_year,
-                             value = max_year,
-                             step = 1,
-                             sep = ""),
-                 # Párrafo de texto debajo del slider
-                 p("Utilice el slider para seleccionar el año que desea explorar en el mapa interactivo.")
+  
+  # Titulo
+  titlePanel("Life expectancy"),
+  
+  tabsetPanel(
+    #Pestaña del mapa
+    tabPanel("Grafico",
+             sidebarPanel(
+               #Slider de tiempo
+               sliderInput("year", "Seleccione el año:",
+                           min = min_year,
+                           max = max_year,
+                           value = max_year,
+                           step = 1,
+                           sep = ""),
+               sliderInput("clusters", "Seleccione el nro. de clusters:",
+                           min = 2,
+                           max = 10,
+                           value = 6,
+                           step = 1,
+                           sep = ""),
+               # Párrafo de texto debajo del slider
+               p("Utilice los sliders para seleccionar el año que desea explorar en el mapa interactivo y el numero de clusters en los que desea agrupar los paises.")
+             ),
+             mainPanel(
+               leafletOutput("mapa", height = "750px"),
+               wellPanel(
+                 p("En el mapa se muestran los países clasificados en clústers de acuerdo a su expectativa de vida y su consumo de alimentos.")
                ),
-               mainPanel(
-                 leafletOutput("mapa", height = "750px"),
-                 wellPanel(
-                   p("En el mapa se muestran los países clasificados en clústers de acuerdo a su expectativa de vida y su consumo de alimentos.")
-                 ),
-                 p("UN, World Population Prospects (2024) – processed by Our World in Data. “Life Expectancy, age 0 – UN WPP”.", class = "text-muted")
-               ),
-               
-      ),
-
-      # Pestaña del dataset lifeExp
-      tabPanel("Data", dataTableOutput("datos_")),
-      
-      tabPanel("Data_norm", dataTableOutput("data_k"))
-    )
+               p("UN, World Population Prospects (2024) – processed by Our World in Data. “Life Expectancy, age 0 – UN WPP”.", class = "text-muted")
+             ),
+    ),
+    
+    #Pestaña que muestra los datos filtrados 
+    tabPanel("Data Filtrada", dataTableOutput("data_f")),
+    
+    #Pestaña que muestra los datos usados en el K Means
+    tabPanel("Data K-Means", dataTableOutput("data_k")),
+    
+    #Pestaña que muestra el dataset original
+    tabPanel("Data Original", dataTableOutput("data_o"))
+  )
 )

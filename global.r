@@ -28,11 +28,10 @@ datos <- datos %>% filter(
   Year >= 1961, nchar(Code) == 3
 ) 
 
-
+#Cargar datos geoespaciales
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
+#Limite de años para el slider de tiempo
 min_year <- 1961
 max_year <- max(datos$Year)
 
-
-#countries <- datos

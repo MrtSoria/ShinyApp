@@ -1,253 +1,105 @@
-
-# library(countrycode)
-# 
-# function(input, output) {
-#   
-#   filteredData <- reactive({
-#     data <- countries %>%
-#       filter(Year == input$year) %>%
-#       mutate(
-#         Life_Exp = as.numeric(as.character(Life_Exp)),
-#         Cal_diarias_p = as.numeric(as.character(Cal_diarias_p)),
-#         Code = as.character(Code),
-#       )
-#     validate(
-#       need(nrow(data) > 0, "No hay datos disponibles para el año seleccionado.")
-
-# 
 # Logica del server
 function(input, output, session) {
-
-  #Generar la DataTable para mostrar el dataset
-    output$datos_ <- renderDT(
-      datos,
-      options = list(lengthchange = TRUE)
-    )
-    
-    #Cargar datos geoespaciales con los codigos ISO
-    #world <- ne_countries(scale = "medium", returnclass = "sf")
     
     #Filtrar datos por año
-      # datos_fil <- reactive({
-      #   datos %>%
-      #     filter(Year == input$year)
-      # })
-      
-      #Unir datos filtrados con el mapa usando los codigos ISO
-      
-      
-      #============================================
-      # PREPARACION KMEANS
-      
-      #Quitar columnas Country, Code y Year
-      #datos_norm <- datos[,-1:-2]
-      
-      #Normalizar datos
-      datos_norm <- datos %>% 
-        mutate(across(c(Life_Exp, Cal_diarias_p, Poblacion_historica), scale))
-      
-      #Filtrar por año
       datos_fil <- reactive({
-        df <- datos_norm
-        
-        df <- df %>% filter(Year == input$year)
-        
-        rownames(df) <- df$Code
-        
-        df <- select(df,-Country,-Code,-Year)
-        
+        df <- datos %>% filter(Year == input$year)
         return(df)
       })
-      #datos_fil <- datos_norm %>% filter(Year == 1980)
       
+      #Datos kmeans
       datos_k <- reactive({
+        #Se usan los datos filtrados de base
         df <- datos_fil()
         
-        #Renombrar
-        #rownames(df) <- df$Code
+        #Cambiar nombres de filas por codigos ISO
+        rownames(df) <- df$Code
         
-        #Quitar 
-        #df_k <- select(df,-Country,-Code,-Year)
+        #Se borran columnas que no sirven para el kmeans 
+        df <- df %>% select(-Country,-Code,-Year)
         
+        #Se normalizan los datos
+        df <- df %>% mutate(across(c(Life_Exp, Cal_diarias_p, Poblacion_historica), scale))
         
+        #Setear semilla 
         set.seed(1234)
         
-        num_clusters <- 5
+        #Kmeans
+        k <- kmeans(df, centers = input$clusters, nstart = 25)
         
-        kmeans <- kmeans(df, centers = num_clusters, nstart = 25)
-        
-        df$Cluster <- as.factor(kmeans$cluster)
+        #Agregar nro de cluster a cada pais
+        df$Cluster <- as.factor(k$cluster)
         
         return(df)
       })
       
-      # mapa_datos <- reactive({
-      #   
-      #   df <- datos_k()
-      #   
-      #   world %>%
-      #     left_join(df, by = c("iso_a3_eh" = "Code")) %>%
-      #     mutate(Cluster = as.factor(Cluster))
-      # })
-      
-      
+      #Renderizar el mapa
       output$mapa <- renderLeaflet({
         
+        #Tomamos datos del kmeans para pintar el mapa
         df_k <- datos_k()
         
+        #Tomamos datos filtrados para brindar la info de cada pais
+        df_info <- datos_fil()
         
-        pal <- colorFactor(viridis::viridis(5), domain = df_k$Cluster)
+        #Generamos una paleta de colores en base a los clusters formados
+        pal <- colorFactor(viridis::viridis(input$clusters), domain = df_k$Cluster)
         
-        leaflet(data = world) %>%
+        #Generar mapa
+        leaflet(data = world, options = leafletOptions(zoomSnap = 0.5, zoomDelta = 0.5, maxZoom = 4, minZoom = 2)) %>%
           addTiles() %>%
+          #Establecer la vista inicial del mapa
+          setView(lng = 0, lat = 30, zoom = 2.25) %>%
           addPolygons(
+            #Color de paises(matcheado usando los codigos ISO)
             fillColor = ~pal(df_k$Cluster[match(world$iso_a3_eh, rownames(df_k))]),
-            color = "black", weight = 1, fillOpacity = 0.7
-          )
+            #Color de limites
+            color = "black", weight = 1, fillOpacity = 0.7,
+            highlightOptions = highlightOptions(
+              color = "white",
+              weight = 2,
+              fillOpacity = 1,
+              bringToFront = TRUE
+            ),
+            #Popup con info de cada pais
+            popup = ~paste("<strong>Country: </strong>",world$name,
+                           "<br><strong>Expectativa de vida: </strong>", round(df_info$Life_Exp[match(world$iso_a3_eh,df_info$Code)]), " años",
+                           "<br><strong>Cal. diarias p/persona: </strong>", df_info$Cal_diarias_p[match(world$iso_a3_eh,df_info$Code)],
+                           "<br><strong>Poblacion: </strong>", df_info$Poblacion_historica[match(world$iso_a3_eh,df_info$Code)]
+            )
+          ) %>%
+          #Leyenda con los colores por cluster
+          addLegend("bottomright",
+                    pal = pal,
+                    values = df_k$Cluster,
+                    title = "Clusters",
+                    opacity = 0.7
+          ) %>%
+          #Fijar limites de desplazamiento
+          setMaxBounds(lng1 = -180, lat1 = -60, lng2 = 180, lat2 = 85)
       })
       
-
+      #Generar la DataTable datos_f para mostrar el dataset filtrado
+      output$data_f <- renderDT(
+        datos,
+        options = list(lengthchange = TRUE)
+      )
       
       
-      
-      
-      # pal <- colorFactor(viridis::viridis(num_clusters), domain = datos_k$Cluster)
-      # 
-      # output$mapa <- renderLeaflet({
-      #   leaflet(data = world) %>%
-      #     addTiles() %>%
-      #     addPolygons(
-      #       fillColor = ~pal(datos_k$Cluster[match(world$iso_a3_eh,rownames(datos_k))]),
-      #       color = "black", weight = 1, fillOpacity =  0.7
-      #     )
-      # })
-      
-      
-      #Nombre de filas como codigos de paises
-      #rownames(datos_fil) <- datos_fil$Code
-      
-      #Quitar columnas Country, Code y Year
-      #datos_k <- datos_fil[,-1:-2:-3]
-      
-      #Nombrar filas como paises
-      #rownames(datos_fil) <- datos_fil$Country
-      
-      
-      
-      
-      
-      #Comprobar el numero optimo de clusters
-      #fviz_nbclust(x = datos_norm , FUNcluster = kmeans, method = "silhouette") +
-      #  ggtitle("Numero optimo de clusters - Metodo del codo") + theme_minimal()
-
-      #Seed
-      #set.seed(1234)
-      
-      #num_clusters <- 5
-      
-      #Aplicar kmeans
-      #kmeans <- kmeans(datos_k, centers = num_clusters, nstart = 25)
-      
-      #Agregar cluster al dataset
-      #datos_k$Cluster <- as.factor(kmeans$cluster)
-      
-      
-      #Colorear mapa
-      
-      
+      #Generar la DataTable datos_k para mostrar el dataset filtrado
       output$data_k <- renderDT(
         datos_k(),
         options = list(lengthchange = TRUE)
       )
       
-      #Renderizar mapa
-      # output$mapa <- renderLeaflet({
-      #   leaflet(data = mapa_datos(), options = leafletOptions(zoomSnap = 0.5, zoomDelta = 0.5, maxZoom = 4, minZoom = 2.25)) %>%
-      #     addTiles() %>%
-      #     #Setear vista de inicio
-      #     setView(lng = 0, lat = 30, zoom = 2) %>%
-      #     addPolygons(
-      #       #Color de los paises
-      #       fillColor = ~colorBin("YlGnBu", Life_Exp, bins = 6)(Life_Exp),
-      #       #Opacidad del color
-      #       fillOpacity = 0.8,
-      #       #Color de frontera
-      #       color = "white",
-      #       #Grosor de frontera
-      #       weight = 0.5,
-      #       #Popup con valor por pais
-      #       popup = ~paste(name, "<br>Expectativa de vida:", round(Life_Exp, 1), "años"),
-      #       label = ~name
-      #     ) %>%
-      #     #Leyenda del mapa
-      #     addLegend("bottomright",
-      #               pal = colorBin("YlGnBu", mapa_datos()$Life_Exp, bins = 6),
-      #               values = mapa_datos()$Life_Exp,
-      #               title = "Expectativa de vida",
-      #               opacity = 1
-      #     ) %>% 
-      #     #Fijar limites de desplazamiento
-      #     setMaxBounds(lng1 = -180, lat1 = -60, lng2 = 180, lat2 = 85)
-      # })
+      #Generar la DataTable datos_o para mostrar el dataset filtrado
+      output$data_o <- renderDT(
+        datos_or,
+        options = list(lengthchange = TRUE)
+      )
 }
 
 
 
 
 
-#   mapa_datos <- reactive({
-
-#     #Cargar datos geoespaciales con los codigos ISO
-#     #world <- ne_countries(scale = "medium", returnclass = "sf")
-#     
-#     #Filtrar datos por año
-#     datos_fil <- reactive({
-#       datos %>%
-#         filter(Year == input$year)
-#     })
-# 
-#     #Unir datos filtrados con el mapa usando los codigos ISO
-#     mapa_datos <- reactive({
-
-  # clusters <- reactive({
-  #   # Perform k-means clustering
-  #   data3<- mapa_datos()[, c("Life_Exp", "Cal_diarias_p")]
-  #   data3 <- na.omit(data3)
-  #    data2 <- data.frame(
-  #     Life_Exp = as.numeric(data3$Life_Exp),
-  #     Cal_diarias_p = as.numeric(data3$Cal_diarias_p)
-  #   )
-  #   str(data2)
-  #   kmeans(scale(data2), centers = 3)  # 3 clusters
-  # })
-  # output$clusterMap <- renderLeaflet({
-  #   df <- mapa_datos()
-  #   df <- na.omit(df)
-  #   clust <- clusters()
-  #   
-  #   # Merge cluster results with geographical data
-  #   df$cluster <- as.factor(clust$cluster)
-  #   
-  #   # Create color palette for clusters
-  #   pal <- colorFactor(palette = c("red", "blue", "green"), domain = df$cluster)
-  #   
-  #   leaflet(df) %>%
-  #     addTiles() %>%
-  #     addCircleMarkers(
-  #       lng = ~Lon, lat = ~Lat,
-  #       color = ~pal(cluster),
-  #       radius = 8,
-  #       stroke = FALSE,
-  #       fillOpacity = 0.8,
-  #       popup = ~paste(Country, "<br>Expectativa de vida:", Life_Exp, "<br>",
-  #                     "Calorías:", Cal_diarias_p)
-  #     ) %>%
-  #     addLegend(
-  #       position = "bottomright",
-  #       pal = pal,
-  #       values = ~cluster,
-  #       title = "Clusters",
-  #       opacity = 1
-  #     )
-  # })
-#}
