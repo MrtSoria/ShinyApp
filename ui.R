@@ -15,27 +15,34 @@
 # UI
 fluidPage(
 
-    # Titulo
+    # Título
     titlePanel("Life expectancy"),
 
     tabsetPanel(
-      #Pestaña del mapa
+      # Pestaña del mapa
       tabPanel("Grafico",
                sidebarPanel(
-                 #Slider de tiempo
+                 # Slider de tiempo
                  sliderInput("year", "Seleccione el año:",
                              min = min_year,
                              max = max_year,
                              value = max_year,
                              step = 1,
-                             sep = "")
+                             sep = ""),
+                 # Párrafo de texto debajo del slider
+                 p("Utilice el slider para seleccionar el año que desea explorar en el mapa interactivo.")
                ),
                mainPanel(
-                 leafletOutput("mapa", height = "800px")
-                 )
+                 leafletOutput("mapa", height = "750px"),
+                 wellPanel(
+                   p("En el mapa se muestran los países clasificados en clústers de acuerdo a su expectativa de vida y su consumo de alimentos.")
+                 ),
+                 p("UN, World Population Prospects (2024) – processed by Our World in Data. “Life Expectancy, age 0 – UN WPP”.", class = "text-muted")
                ),
+               
+      ),
 
-      #Pestaña del dataset lifeExp
+      # Pestaña del dataset lifeExp
       tabPanel("Data", dataTableOutput("datos_")),
       
       tabPanel("Data_norm", dataTableOutput("data_k"))
