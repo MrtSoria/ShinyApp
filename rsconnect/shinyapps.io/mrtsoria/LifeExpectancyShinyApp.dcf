@@ -1,0 +1,12 @@
+name: LifeExpectancyShinyApp
+title: LifeExpectancyShinyApp
+username: mrtsoria
+account: mrtsoria
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 14044803
+bundleId: 9825810
+url: https://mrtsoria.shinyapps.io/LifeExpectancyShinyApp/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
