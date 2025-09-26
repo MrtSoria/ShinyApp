@@ -1,4 +1,3 @@
-
 # UI
 fluidPage(
   
@@ -63,7 +62,9 @@ fluidPage(
                            step = 1,
                            sep = ""),
                # Párrafo de texto debajo del slider
-               p("Utilice los sliders para seleccionar el año que desea explorar en el mapa interactivo y el numero de clusters en los que desea agrupar los paises.")
+               p("Utilice los sliders para seleccionar el año que desea explorar en el mapa interactivo y el numero de clusters en los que desea agrupar los paises."),
+               h4("Límites por cluster"),
+               tableOutput("limites_clusters")
              ),
              mainPanel(
                leafletOutput("mapa", height = "750px"),
@@ -71,7 +72,7 @@ fluidPage(
                  p("En el mapa se muestran los países clasificados en clústers de acuerdo a su expectativa de vida y su consumo de alimentos.")
                ),
                p("UN, World Population Prospects (2024) – processed by Our World in Data. “Life Expectancy, age 0 – UN WPP”.", class = "text-muted")
-             ),
+             )
     ),
     
     #Pestaña que muestra los datos filtrados 

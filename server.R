@@ -33,6 +33,26 @@ function(input, output, session) {
         return(df)
       })
       
+      # Resumen de límites de cada cluster
+      cluster_limits <- reactive({
+        df_k <- datos_k()
+        
+        df_real <- datos_fil() %>%
+          mutate(Cluster = df_k$Cluster)
+        
+        df_real %>%
+          group_by(Cluster) %>%
+          summarise(
+            LifeExp = paste0(
+              round(min(Life_Exp, na.rm = TRUE),1), " – ",
+              round(max(Life_Exp, na.rm = TRUE),1), " años"
+            ),
+            Calorias = paste0(
+              round(min(Cal_diarias_p, na.rm = TRUE),0), " – ",
+              round(max(Cal_diarias_p, na.rm = TRUE),0), " kcal"
+            )
+          )
+      })
       #Renderizar el mapa
       output$mapa <- renderLeaflet({
         
@@ -85,7 +105,6 @@ function(input, output, session) {
         options = list(lengthchange = TRUE)
       )
       
-      
       #Generar la DataTable datos_k para mostrar el dataset filtrado
       output$data_k <- renderDT(
         datos_k(),
@@ -96,6 +115,11 @@ function(input, output, session) {
       output$data_o <- renderDT(
         datos_or,
         options = list(lengthchange = TRUE)
+      )
+      
+      #Mostrar limites de clusters
+      output$limites_clusters <- renderTable(
+        cluster_limits()
       )
 }
 
